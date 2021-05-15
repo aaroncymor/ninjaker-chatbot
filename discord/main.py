@@ -37,6 +37,7 @@ async def ping(ctx):
 
 @client.command()
 async def play(ctx, url : str):
+    #logger.debug("Context message",ctx.message)
     song_there = os.path.isfile("song.mp3")
     try:
         if song_there:
