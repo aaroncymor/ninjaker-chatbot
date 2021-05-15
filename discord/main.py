@@ -3,7 +3,7 @@ import logging.config, logging
 
 import discord
 from discord.ext import commands
-from datetime import datetime
+import youtube_dl
 import yaml
 
 conf_env = os.getenv('CONFIG')
@@ -23,40 +23,81 @@ logger = logging.getLogger('NinjakerDiscordLogger')
 # load configuration file
 TOKEN = config_data['discord']['token']
 COMMAND_PREFIX = config_data['discord']['command_prefix']
-ALLOWED_CHANNELS = config_data['discord']['allowed_channels']
+ALLOWED_TEXT_CHANNELS = config_data['discord']['allowed_text_channels']
+ALLOWED_VOICE_CHANNELS = config_data['discord']['allowed_voice_channels']
 ALLOWED_COMMANDS = config_data['discord']['allowed_commands']
 
-bot = commands.Bot(command_prefix=COMMAND_PREFIX)
+client = commands.Bot(command_prefix=COMMAND_PREFIX)
 
-@bot.command()
+@client.command()
 async def ping(ctx):
-    logger.debug("this is a test - pong")
+    logger.debug("This is ctx", ctx)
     await ctx.send('pong')
 
-bot.run(TOKEN)
 
-# client = discord.Client()
+@client.command()
+async def play(ctx, url : str):
+    song_there = os.path.isfile("song.mp3")
+    try:
+        if song_there:
+            os.remove("song.mp3")
+    except PermissionError:
+        await ctx.send("Wait for the current music to end or use the `stop` command")
+        return
 
-# @client.event
-# async def on_ready():
-#     logger.debug('We have logged in as {0.user}'.format(client))
+    voice_channel = discord.utils.get(ctx.guild.voice_channels, name='DOTAmbayan Voice Chat')
+    await voice_channel.connect()
+    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+        
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }]
+    }
 
-# @client.event
-# async def on_message(message):
-#     username = str(message.author).split('#')[0]
-#     user_message = str(message.content)
-#     channel = str(message.channel.name)
-#     print(f'{username}: {user_message} ({channel})')
+    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
+    
+    for file in os.listdir("./"):
+        if file.endswith(".mp3"):
+            os.rename(file, "song.mp3")
+    
+    voice.play(discord.FFmpegPCMAudio("song.mp3"))
 
-#     if username == client.user:
-#         return
+@client.command()
+async def leave(ctx):
+    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+    if voice.is_connected():
+        await voice.disconnect()
+    else:
+        await ctx.send("The bot is not connected to a voice channel.")
 
-#     if channel not in ALLOWED_CHANNELS:
-#         print('{0} not in allowed channels.'.format(channel))
-#         return
 
-#     if message.content.startswith('!hello'):
-#         await message.channel.send('Hello!')
+@client.command()
+async def pause(ctx):
+    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+    if voice.is_playing():
+        voice.pause()
+    else:
+        await ctx.send("Currently no audio is playing.")
 
-# client.run(config_data['discord']['token'])
+
+@client.command()
+async def resume(ctx):
+    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+    if voice.is_paused():
+        voice.resume()
+    else:
+        await ctx.send("The audio is not paused")
+
+
+@client.command()
+async def stop(ctx):
+    voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+    voice.stop()
+
+client.run(TOKEN)
 
