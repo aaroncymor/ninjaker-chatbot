@@ -1,0 +1,20 @@
+aiohttp==3.7.4.post0
+async-timeout==3.0.1
+attrs==21.2.0
+certifi==2020.12.5
+cffi==1.14.5
+chardet==4.0.0
+discord==1.0.1
+discord.py==1.7.2
+idna==2.10
+multidict==5.1.0
+-e git+https://github.com/aaroncymor/ninjaker-chatbot.git@e28d7d289d8908cad899c8f7dc2362990d6ab833#egg=ninjnaker_chatbot
+pycparser==2.20
+PyNaCl==1.4.0
+PyYAML==5.4.1
+requests==2.25.1
+six==1.16.0
+typing-extensions==3.10.0.0
+urllib3==1.26.4
+yarl==1.6.3
+youtube-dl==2021.4.26
