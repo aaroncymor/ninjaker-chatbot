@@ -1,6 +1,8 @@
 import os
 import discord
 import yaml
+import requests
+import json
 
 conf_env = os.getenv('CONFIG')
 if not conf_env:
@@ -23,7 +25,7 @@ async def on_message(message):
     if message.author == client.user:
         return
     
-    if message.content.startswith('$hello'):
+    if message.content.startswith('hello'):
         await message.channel.send('Hello!')
 
 client.run(config_data['app']['discord_token'])
